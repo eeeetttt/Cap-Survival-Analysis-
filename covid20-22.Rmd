@@ -1,0 +1,93 @@
+---
+title: "covid2"
+author: "Enbo Tian"
+date: "2022/1/18"
+output: html_document
+---
+
+
+```{r}
+data <- read.csv("220118COVID19MEXICO.csv")
+summary(data)
+
+#1The database is fed daily, this variable allows to identify the date of the last update.  
+update_date <- data$FECHA_ACTUALIZACION
+#2Case identification number
+id_register <- data$ID_REGISTRO
+#3Sentinel surveillance is carried out through the system of respiratory disease monitoring health units (USMER). The USMER include medical units of the first, second or third level of care and also participate as USMER the third level units that, due to their characteristics, contribute to broadening the panorama of epidemiological information, among them those that have a specialty in pulmonology, infectology or pediatrics . (Categories in Annex Catalog).
+origin <- data$ORIGEN
+#4Identifies the type of institution of the National Health System that provided the care.
+industry <- data$SECTOR
+#5Identifies the entity where the medical unit that provided the care is located.
+entity_nm <- data$ENTIDAD_UM
+#6Identifies the patient's gender.
+sex <- data$SEXO
+#7Identifies the entity of birth of the patient.
+entity_nac  <- data$ENTIDAD_NAC 
+#8Identifies the entity of residence of the patient.
+entity_res <- data$ENTIDAD_RES
+#9Identifies the municipality of residence of the patient.
+municipality  <- data$MUNICIPIO_RES
+#10Identifies the type of care received by the patient in the unit. It is called outpatient if you went home, or it is called inpatient if you were admitted to hospital.
+type_patient <- data$TIPO_PACIENTE
+#11Identifies the date of admission of the patient to the care unit.
+entry_date  <-data$FECHA_INGRESO
+#12Identifies the date on which the patient's symptoms began.
+symptom_date <- data$FECHA_SINTOMAS
+#13Identifies the date the patient died.
+dead_date<- data$FECHA_DEF
+#14Identifies if the patient required intubation.
+intubated <- data$INTUBADO
+#15Identifies if the patient has been diagnosed with pneumonia.
+pneumonia<-data$NEUMONIA
+#16Identifies the age of the patient.
+age <- data$EDAD
+#17Identifies if the patient is Mexican or foreign.
+nationality<-data$NACIONALIDAD
+#18Identifies if the patient is pregnant.
+pregnant<- data$EMBARAZO
+#19Identifies if the patient speaks an indigenous language.
+indigenous_language_speak<-data$HABLA_LENGUA_INDIG
+#20Identifies if the patient self-identifies as an indigenous person.
+indigenous<-data$INDIGENA
+#21Identifies if the patient has a diagnosis of diabetes.
+diabetes<-data$DIABETES
+#22Identifies if the patient has a diagnosis of COPD 慢性阻塞性肺病（chronic obstructive pulmonary disease）
+COPD <- data$EPOC
+#23Identifies if the patient has a diagnosis of asthma.哮喘
+asthma<-data$ASMA
+#24Identifies if the patient has immunosuppression.免疫低下
+immunosuppression_data$INMUSUPR
+#25Identifies if the patient has a diagnosis of hypertension.高血压
+HYPERTENSION<-data$HIPERTENSION
+#26Identifies if the patient has a diagnosis of other diseases.
+other_diseases<-data$OTRA_COM
+#27Identifies if the patient has a diagnosis of cardiovascular diseases.心血管疾病
+cardiovascular<-data$CARDIOVASCULAR
+#28Identifies if the patient has a diagnosis of obesity.肥胖的诊断
+obesity<-data$OBESIDAD
+#29Identifies if the patient has a diagnosis of chronic renal failure.慢性肾功能衰竭
+chronic_renal_failure<-data$RENAL_CRONICA
+#30Identifies if the patient has a smoking habit.
+smoking<-data$TABAQUISMO
+#31Identifies if the patient had contact with any other case diagnosed with SARS CoV-2
+another_case<-data$OTRO_CASO
+#32Identifies if the patient had a laboratory sample taken.
+sample_lab_take<-data$TOMA_MUESTRA_LAB
+#33Identifies the result of the analysis of the sample reported by the laboratory of the National Network of Epidemiological Surveillance Laboratories (INDRE, LESP and LAVE) and private laboratories endorsed by the InDRE whose results are registered in SISVER. (Catalogue of diagnostic results attached).
+lab_result<-data$RESULTADO_LAB
+#34Identifies if the patient had a laboratory sample taken.
+antigen_sample_take<-data$TOMA_MUESTRA_ANTIGENO
+#35Identifies the result of the analysis of the antigen sample taken from the patient
+antigen_result<-data$RESULTADO_ANTIGENO
+#36Identifies if the patient is a case of COVID-19 according to the "CLASIFICACION_FINAL" catalog.
+final_classification<-data$CLASIFICACION_FINAL
+#37Identifies if the patient is a migrant person.
+migrant<-data$MIGRANTE
+#38Identifies the nationality of the patient.
+country_nationality<-data$PAIS_NACIONALIDAD
+#39Identifies the country from which the patient left for Mexico.
+country_of_origin<-data$PAIS_ORIGEN
+#40Identifica si el paciente requirió ingresar a una Unidad de Cuidados Intensivos.
+ICU<-data$UCI
+```

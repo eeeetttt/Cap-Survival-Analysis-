@@ -1,0 +1,536 @@
+---
+title: "survival_covid"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#library
+library(plyr)
+library(survival)
+library(stats4)
+library(MASS)
+library(survminer)
+```
+
+```{r}
+###DATA CLEANING
+originaldata = read.csv("220118COVID19MEXICO.csv")
+data = originaldata
+head(data,5)
+colnames(data) =c("date_update","ID","SOURCE", 'SECTOR', 'ENTITY_UM','SEX','ENTITY_NAC','ENTITY_RES','MUNICIPALITY_RES','HOSPITAL','entry_date','date_symptoms',
+'date_died','INTUBATED','PNEUMONIA','AGE','NATIONALITY','PREGNANCY','home_language','INDIGENOUS','DIABETES','COPD','ASTHMA','INMUSUPR','HYPERTENSION','OTHER_COM','CARDIOVASCULAR',
+'OBESITY','RENAL_CHRONIC','SMOKING','ANOTHER CASE','TAKE_LAB_SAMPLE','LAB_RESULT','TAKE_SAMPLE_ANTIGEN','RESULT_ANTIGEN','CLASSIFICATION_FINAL','MIGRANT','COUNTRY_NATIONALITY',
+'COUNTRY OF ORIGIN','ICU')
+drop=c("SOURCE", 'SECTOR', 'ENTITY_UM','ENTITY_NAC','ENTITY_RES','MUNICIPALITY_RES','COUNTRY_NATIONALITY','CLASSIFICATION_FINAL','MIGRANT','COUNTRY OF ORIGIN','TAKE_SAMPLE_ANTIGEN','RESULT_ANTIGEN','TAKE_LAB_SAMPLE','LAB_RESULT','ANOTHER CASE','NATIONALITY')
+data = data[,!(names(data) %in% drop)]
+write.csv(data, file = "refined_data_220118.csv")
+```
+
+```{r}
+###DATA CLEANING
+#originaldata = read.csv("220118COVID19MEXICO.csv")
+#data = originaldata
+#head(data,5)
+#colnames(data) =c("date_update","ID","SOURCE", 'SECTOR', 'ENTITY_UM','SEX','ENTITY_NAC','ENTITY_RES','MUNICIPALITY_RES','HOSPITAL','entry_date','date_symptoms',
+#'date_died','INTUBATED','PNEUMONIA','AGE','NATIONALITY','PREGNANCY','home_language','INDIGENOUS','DIABETES','COPD','ASTHMA','INMUSUPR','HYPERTENSION','OTHER_COM','CARDIOVASCULAR',
+#'OBESITY','RENAL_CHRONIC','SMOKING','ANOTHER CASE','TAKE_LAB_SAMPLE','LAB_RESULT','TAKE_SAMPLE_ANTIGEN','RESULT_ANTIGEN','CLASSIFICATION_FINAL','MIGRANT','COUNTRY_NATIONALITY',
+#'COUNTRY OF ORIGIN','ICU')
+#drop=c("SOURCE", 'SECTOR', 'ENTITY_UM','ENTITY_NAC','ENTITY_RES','MUNICIPALITY_RES','COUNTRY_NATIONALITY','CLASSIFICATION_FINAL','MIGRANT','COUNTRY OF #ORIGIN','TAKE_SAMPLE_ANTIGEN','RESULT_ANTIGEN','TAKE_LAB_SAMPLE','LAB_RESULT','ANOTHER CASE','NATIONALITY')
+#data = data[,!(names(data) %in% drop)]
+#write.csv(data, file = "refined_data_220118.csv")
+```
+```{r}
+### GROUP DATA
+##read data
+#data = read.csv("covid.csv")
+#data = read.csv("refined_data_220118.csv")
+#date1 = as.Date(data$ADMISSION_DATE)
+#date2 = as.Date(data$DATE_SYMPTOMS)
+#date3 = rep("2050-01-01",13244807)
+#for (i in 1:13244807){
+#  if (data$DATE_DEF[i]!="9999-99-99"){
+#    date3[i] = data$DATE_DEF[i]
+#  }
+#}
+#date3 = as.Date(date3)
+#time of patient survival after symptom, 10000 if not died
+#survival_time = as.numeric(date3-date2)
+#for (i in 1:13244807){
+#  if (data$DATE_DEF[i]=="9999-99-99"){
+#    survival_time[i] = 10000
+#  }
+#}
+#survival_time
+##date of separation to divide date in 18 groups
+#date_separator = seq(as.Date("2020-01-01"), as.Date("2022-01-18"), by="month")
+##survival time in date group
+#survival_time_group1 = data.frame("survival_time" = survival_time[date2<date_separator[2]&date2>=date_separator[1]])
+#survival_time_group2 = data.frame("survival_time" = survival_time[date2<date_separator[3]&date2>=date_separator[2]])
+#survival_time_group3 = data.frame("survival_time" = survival_time[date2<date_separator[4]&date2>=date_separator[3]])
+#survival_time_group4 = data.frame("survival_time" = survival_time[date2<date_separator[5]&date2>=date_separator[4]])
+#survival_time_group5 = data.frame("survival_time" = survival_time[date2<date_separator[6]&date2>=date_separator[5]])
+#survival_time_group6 = data.frame("survival_time" = survival_time[date2<date_separator[7]&date2>=date_separator[6]])
+#survival_time_group7 = data.frame("survival_time" = survival_time[date2<date_separator[8]&date2>=date_separator[7]])
+#survival_time_group8 = data.frame("survival_time" = survival_time[date2<date_separator[9]&date2>=date_separator[8]])
+#survival_time_group9 = data.frame("survival_time" = survival_time[date2<date_separator[10]&date2>=date_separator[9]])
+#survival_time_group10 = data.frame("survival_time" = survival_time[date2<date_separator[11]&date2>=date_separator[10]])
+#survival_time_group11 = data.frame("survival_time" = survival_time[date2<date_separator[12]&date2>=date_separator[11]])
+#survival_time_group12 = data.frame("survival_time" = survival_time[date2<date_separator[13]&date2>=date_separator[12]])
+#survival_time_group13 = data.frame("survival_time" = survival_time[date2<date_separator[14]&date2>=date_separator[13]])
+#survival_time_group14 = data.frame("survival_time" = survival_time[date2<date_separator[15]&date2>=date_separator[14]])
+#survival_time_group15 = data.frame("survival_time" = survival_time[date2<date_separator[16]&date2>=date_separator[15]])
+#survival_time_group16 = data.frame("survival_time" = survival_time[date2<date_separator[17]&date2>=date_separator[16]])
+#survival_time_group17 = data.frame("survival_time" = survival_time[date2<date_separator[18]&date2>=date_separator[17]])
+#survival_time_group18 = data.frame("survival_time" = survival_time[date2<date_separator[19]&date2>=date_separator[18]])
+#survival_time_group19 = data.frame("survival_time" = survival_time[date2<date_separator[20]&date2>=date_separator[19]])
+#survival_time_group20 = data.frame("survival_time" = survival_time[date2<date_separator[21]&date2>=date_separator[20]])
+#survival_time_group21 = data.frame("survival_time" = survival_time[date2<date_separator[22]&date2>=date_separator[21]])
+#survival_time_group22 = data.frame("survival_time" = survival_time[date2<date_separator[23]&date2>=date_separator[22]])
+#survival_time_group23 = data.frame("survival_time" = survival_time[date2<date_separator[24]&date2>=date_separator[23]])
+#survival_time_group24 = data.frame("survival_time" = survival_time[date2<date_separator[25]&date2>=date_separator[24]])
+#survival_time_group25 = data.frame("survival_time" = survival_time[date2>date_separator[24]])
+#write.csv(survival_time_group1, file = "survival_time_group1.csv")
+#write.csv(survival_time_group2, file = "survival_time_group2.csv")
+#write.csv(survival_time_group3, file = "survival_time_group3.csv")
+#write.csv(survival_time_group4, file = "survival_time_group4.csv")
+#write.csv(survival_time_group5, file = "survival_time_group5.csv")
+#write.csv(survival_time_group6, file = "survival_time_group6.csv")
+#write.csv(survival_time_group7, file = "survival_time_group7.csv")
+#write.csv(survival_time_group8, file = "survival_time_group8.csv")
+#write.csv(survival_time_group9, file = "survival_time_group9.csv")
+#write.csv(survival_time_group10, file = "survival_time_group10.csv")
+#write.csv(survival_time_group11, file = "survival_time_group11.csv")
+#write.csv(survival_time_group12, file = "survival_time_group12.csv")
+#write.csv(survival_time_group13, file = "survival_time_group13.csv")
+#write.csv(survival_time_group14, file = "survival_time_group14.csv")
+#write.csv(survival_time_group15, file = "survival_time_group15.csv")
+#write.csv(survival_time_group16, file = "survival_time_group16.csv")
+#write.csv(survival_time_group17, file = "survival_time_group17.csv")
+#write.csv(survival_time_group18, file = "survival_time_group18.csv")
+#write.csv(survival_time_group19, file = "survival_time_group19.csv")
+#write.csv(survival_time_group20, file = "survival_time_group20.csv")
+#write.csv(survival_time_group21, file = "survival_time_group21.csv")
+#write.csv(survival_time_group22, file = "survival_time_group22.csv")
+#write.csv(survival_time_group23, file = "survival_time_group23.csv")
+#write.csv(survival_time_group24, file = "survival_time_group24.csv")
+#write.csv(survival_time_group25, file = "survival_time_group25.csv")
+#separate date into 18 groups for use
+#data_group1 = data[date2<date_separator[2]&date2>=date_separator[1],]
+#data_group2 = data[date2<date_separator[3]&date2>=date_separator[2],]
+#data_group3 = data[date2<date_separator[4]&date2>=date_separator[3],]
+#data_group4 = data[date2<date_separator[5]&date2>=date_separator[4],]
+#data_group5 = data[date2<date_separator[6]&date2>=date_separator[5],]
+#data_group6 = data[date2<date_separator[7]&date2>=date_separator[6],]
+#data_group7 = data[date2<date_separator[8]&date2>=date_separator[7],]
+#data_group8 = data[date2<date_separator[9]&date2>=date_separator[8],]
+#data_group9 = data[date2<date_separator[10]&date2>=date_separator[9],]
+#data_group10 = data[date2<date_separator[11]&date2>=date_separator[10],]
+#data_group11 = data[date2<date_separator[12]&date2>=date_separator[11],]
+#data_group12 = data[date2<date_separator[13]&date2>=date_separator[12],]
+#data_group13 = data[date2<date_separator[14]&date2>=date_separator[13],]
+#data_group14 = data[date2<date_separator[15]&date2>=date_separator[14],]
+#data_group15 = data[date2<date_separator[16]&date2>=date_separator[15],]
+#data_group16 = data[date2<date_separator[17]&date2>=date_separator[16],]
+#data_group17 = data[date2<date_separator[18]&date2>=date_separator[17],]
+#data_group18 = data[date2<date_separator[19]&date2>=date_separator[18],]
+#data_group19 = data[date2<date_separator[20]&date2>=date_separator[19],]
+#data_group20 = data[date2<date_separator[21]&date2>=date_separator[20],]
+#data_group21 = data[date2<date_separator[22]&date2>=date_separator[21],]
+#data_group22 = data[date2<date_separator[23]&date2>=date_separator[22],]
+#data_group23 = data[date2<date_separator[24]&date2>=date_separator[23],]
+#data_group24 = data[date2<date_separator[25]&date2>=date_separator[24],]
+#data_group25 = data[date2>date_separator[24],]
+```
+```{r}
+#read cleaned data
+survival_time_group1 = read.csv("survival_time_group1.csv")
+survival_time_group2 = read.csv("survival_time_group2.csv")
+survival_time_group3 = read.csv("survival_time_group3.csv")
+survival_time_group4 = read.csv("survival_time_group4.csv")
+survival_time_group5 = read.csv("survival_time_group5.csv")
+survival_time_group6 = read.csv("survival_time_group6.csv")
+survival_time_group7 = read.csv("survival_time_group7.csv")
+survival_time_group8 = read.csv("survival_time_group8.csv")
+survival_time_group9 = read.csv("survival_time_group9.csv")
+survival_time_group10 = read.csv("survival_time_group10.csv")
+survival_time_group11 = read.csv("survival_time_group11.csv")
+survival_time_group12 = read.csv("survival_time_group12.csv")
+survival_time_group13 = read.csv("survival_time_group13.csv")
+survival_time_group14 = read.csv("survival_time_group14.csv")
+survival_time_group15 = read.csv("survival_time_group15.csv")
+survival_time_group16 = read.csv("survival_time_group16.csv")
+survival_time_group17 = read.csv("survival_time_group17.csv")
+survival_time_group18 = read.csv("survival_time_group18.csv")
+survival_time_group19 = read.csv("survival_time_group19.csv")
+survival_time_group20 = read.csv("survival_time_group20.csv")
+survival_time_group21 = read.csv("survival_time_group21.csv")
+survival_time_group22 = read.csv("survival_time_group22.csv")
+survival_time_group23 = read.csv("survival_time_group23.csv")
+survival_time_group24 = read.csv("survival_time_group24.csv")
+survival_time_group25 = read.csv("survival_time_group25.csv")
+#get rid of false data
+survival_time_group1 = survival_time_group1[survival_time_group1$survival_time>0,]
+survival_time_group2 = survival_time_group2[survival_time_group2$survival_time>0,]
+survival_time_group3 = survival_time_group3[survival_time_group3$survival_time>0,]
+survival_time_group4 = survival_time_group4[survival_time_group4$survival_time>0,]
+survival_time_group5 = survival_time_group5[survival_time_group5$survival_time>0,]
+survival_time_group6 = survival_time_group6[survival_time_group6$survival_time>0,]
+survival_time_group7 = survival_time_group7[survival_time_group7$survival_time>0,]
+survival_time_group8 = survival_time_group8[survival_time_group8$survival_time>0,]
+survival_time_group9 = survival_time_group9[survival_time_group9$survival_time>0,]
+survival_time_group10 = survival_time_group10[survival_time_group10$survival_time>0,]
+survival_time_group11 = survival_time_group11[survival_time_group11$survival_time>0,]
+survival_time_group12 = survival_time_group12[survival_time_group12$survival_time>0,]
+survival_time_group13 = survival_time_group13[survival_time_group13$survival_time>0,]
+survival_time_group14 = survival_time_group14[survival_time_group14$survival_time>0,]
+survival_time_group15 = survival_time_group15[survival_time_group15$survival_time>0,]
+survival_time_group16 = survival_time_group16[survival_time_group16$survival_time>0,]
+survival_time_group17 = survival_time_group17[survival_time_group17$survival_time>0,]
+survival_time_group18 = survival_time_group18[survival_time_group18$survival_time>0,]
+survival_time_group19 = survival_time_group19[survival_time_group19$survival_time>0,]
+survival_time_group20 = survival_time_group20[survival_time_group20$survival_time>0,]
+survival_time_group21 = survival_time_group21[survival_time_group21$survival_time>0,]
+survival_time_group22 = survival_time_group22[survival_time_group22$survival_time>0,]
+survival_time_group23 = survival_time_group23[survival_time_group23$survival_time>0,]
+survival_time_group24 = survival_time_group24[survival_time_group24$survival_time>0,]
+survival_time_group25 = survival_time_group25[survival_time_group25$survival_time>0,]
+#km_models
+km_model = function(data){
+  time = data$survival_time
+  death = rep(1,length(time))
+  death[time==10000]= 0
+  return(survfit(Surv(time,death)~1,type = "kaplan-meier"))
+}
+km_model_group1 = km_model(survival_time_group1)
+km_model_group2 = km_model(survival_time_group2)
+km_model_group3 = km_model(survival_time_group3)
+km_model_group4 = km_model(survival_time_group4)
+km_model_group5 = km_model(survival_time_group5)
+km_model_group6 = km_model(survival_time_group6)
+km_model_group7 = km_model(survival_time_group7)
+km_model_group8 = km_model(survival_time_group8)
+km_model_group9 = km_model(survival_time_group9)
+km_model_group10 = km_model(survival_time_group10)
+km_model_group11 = km_model(survival_time_group11)
+km_model_group12 = km_model(survival_time_group12)
+km_model_group13 = km_model(survival_time_group13)
+km_model_group14 = km_model(survival_time_group14)
+km_model_group15 = km_model(survival_time_group15)
+km_model_group16 = km_model(survival_time_group16)
+km_model_group17 = km_model(survival_time_group17)
+km_model_group18 = km_model(survival_time_group18)
+km_model_group19 = km_model(survival_time_group19)
+km_model_group20 = km_model(survival_time_group20)
+km_model_group21 = km_model(survival_time_group21)
+km_model_group22 = km_model(survival_time_group22)
+km_model_group23 = km_model(survival_time_group23)
+km_model_group24 = km_model(survival_time_group24)
+km_model_group25 = km_model(survival_time_group25)
+#test result
+summary(km_model_group1)
+plot(km_model_group1,conf.int=F,ylim = c(0.90,1),xlim = c(0,100),col = 'red')
+lines(km_model_group7,conf.int=F,col = 'blue')
+lines(km_model_group13,conf.int=F,col = 'orange')
+lines(km_model_group19,conf.int=F,col = 'green')
+lines(km_model_group24,conf.int=F,col = 'black')
+#hazard function
+hazard = function(km_model){
+  time = summary(km_model)$time
+  time = time[1:length(time)-1]
+  hazard = numeric(length(time))
+  surv = summary(km_model)$surv
+  for (i in 1:length(time)){
+    hazard[i] = 1-surv[i+1]/surv[i]
+  }
+  return (list(time = time,hazard = hazard))
+}
+hazard1 = hazard(km_model_group1)
+hazard2 = hazard(km_model_group2)
+hazard3 = hazard(km_model_group3)
+hazard4 = hazard(km_model_group4)
+hazard5 = hazard(km_model_group5)
+hazard6 = hazard(km_model_group6)
+hazard7 = hazard(km_model_group7)
+hazard8 = hazard(km_model_group8)
+hazard9 = hazard(km_model_group9)
+hazard10 = hazard(km_model_group10)
+hazard11 = hazard(km_model_group11)
+hazard12 = hazard(km_model_group12)
+hazard13 = hazard(km_model_group13)
+hazard14 = hazard(km_model_group14)
+hazard15 = hazard(km_model_group15)
+hazard16 = hazard(km_model_group16)
+hazard17 = hazard(km_model_group17)
+hazard18 = hazard(km_model_group18)
+hazard19 = hazard(km_model_group19)
+hazard20 = hazard(km_model_group20)
+hazard21 = hazard(km_model_group21)
+hazard22 = hazard(km_model_group22)
+hazard23 = hazard(km_model_group23)
+hazard24 = hazard(km_model_group24)
+hazard25 = hazard(km_model_group25)
+#probability density function
+f_function = function(km_model){
+  time = summary(km_model)$time
+  time = time[1:length(time)-1]
+  f = numeric(length(time))
+  surv = summary(km_model)$surv
+  for (i in 1:length(time)){
+    f[i] = surv[i]-surv[i+1]
+  }
+  return (list(time = time,pdf = f))
+}
+f1 = f_function(km_model_group1)
+f2 = f_function(km_model_group2)
+f3 = f_function(km_model_group3)
+f4 = f_function(km_model_group4)
+f5 = f_function(km_model_group5)
+f6 = f_function(km_model_group6)
+f7 = f_function(km_model_group7)
+f8 = f_function(km_model_group8)
+f9 = f_function(km_model_group9)
+f10 = f_function(km_model_group10)
+f11 = f_function(km_model_group11)
+f12 = f_function(km_model_group12)
+f13 = f_function(km_model_group13)
+f14 = f_function(km_model_group14)
+f15 = f_function(km_model_group15)
+f16 = f_function(km_model_group16)
+f17 = f_function(km_model_group17)
+f18 = f_function(km_model_group18)
+f19 = f_function(km_model_group19)
+f20 = f_function(km_model_group20)
+f21 = f_function(km_model_group21)
+f22 = f_function(km_model_group22)
+f23 = f_function(km_model_group23)
+f24 = f_function(km_model_group24)
+f25 = f_function(km_model_group25)
+plot(f7$time,f7$pdf,type = "l",xlim = c(1,100))
+```
+
+```{r}
+#lognormal model using newton-gaussian method
+fn = function(theta,x,t3=1){
+  
+  s = numeric(length(x))
+  t1 = theta[1]; t2 = exp(-theta[2])#; t4 = exp(-theta[3])#; t3 = exp(-theta[3])
+  for (i in 1:length(x)){
+    #s[i] = t3/((x[i]+t4)*t2*sqrt(2*pi))*exp(-(log(x[i])-t1)^2/(2*t2^2))
+    s[i] = t3/((x[i])*t2*sqrt(2*pi))*exp(-(log(x[i])-t1)^2/(2*t2^2))
+  }
+  return (s)
+}
+dfn = function(theta,x,t3){
+  g = matrix(nrow = length(x),ncol = 2)
+  t1 = theta[1]; t2 = exp(-theta[2])#; t4 = exp(-theta[3])#; t3 = exp(-theta[3])
+  for (i in 1:length(x)){
+    a = log(x[i])-t1
+    g[i,1] = t3/((x[i])*t2*sqrt(2*pi))*exp(-a^2/(2*t2^2))*a/t2^2
+    g[i,2] = -t2*t3/((x[i])*sqrt(2*pi))*(exp(-a^2/(2*t2^2))*(a^2-t2^2)/t2^4)
+ #   g[i,3] = -t3/((x[i])*t2*sqrt(2*pi))*exp(-(a-t1)^2/(2*t2^2))
+  # g[i,3] = -t4*t3/(sqrt(2*pi)*t2)*(exp(-a^2/(2*t2^2))*(-1-a/t2^2)/(x[i]+t4)^2)
+  }
+  return (g)
+}
+lognormal_NG = function(theta,pdf_function){
+  tol = 1e-5;maxiter = 100; iter = 0
+  tol.met=FALSE
+  t3 = sum(pdf_function$pdf)
+  x = pdf_function$time[pdf_function$time<20]
+  y = pdf_function$pdf[pdf_function$time<20]
+  iterhist = t(theta)
+  while(!tol.met){
+    iter = iter+1
+    oldtheta = theta
+    f = fn(theta,x,t3)
+    g = dfn(theta,x,t3)
+    theta = theta+solve(t(g)%*%g,t(g)%*%(y-f))
+    iterhist = rbind(iterhist,t(theta))
+    if(max(abs(theta-oldtheta)<tol|iter>maxiter)) tol.met = TRUE
+  }
+  return (theta)
+}
+#initialize and apply method
+theta = c(2.5,0.3)
+iter_lognormal_group1 = lognormal_NG(theta,f1)
+iter_lognormal_group2 = lognormal_NG(theta,f2)
+iter_lognormal_group3 = lognormal_NG(theta,f3)
+iter_lognormal_group4 = lognormal_NG(theta,f4)
+iter_lognormal_group5 = lognormal_NG(theta,f5)
+iter_lognormal_group6 = lognormal_NG(theta,f6)
+iter_lognormal_group7 = lognormal_NG(theta,f7)
+iter_lognormal_group8 = lognormal_NG(theta,f8)
+iter_lognormal_group9 = lognormal_NG(theta,f9)
+iter_lognormal_group10 = lognormal_NG(theta,f10)
+iter_lognormal_group11 = lognormal_NG(theta,f11)
+iter_lognormal_group12 = lognormal_NG(theta,f12)
+iter_lognormal_group13 = lognormal_NG(theta,f13)
+iter_lognormal_group14 = lognormal_NG(theta,f14)
+iter_lognormal_group15 = lognormal_NG(theta,f15)
+iter_lognormal_group16 = lognormal_NG(theta,f16)
+iter_lognormal_group17 = lognormal_NG(theta,f17)
+iter_lognormal_group18 = lognormal_NG(theta,f18)
+iter_lognormal_group19 = lognormal_NG(theta,f19)
+iter_lognormal_group20 = lognormal_NG(theta,f20)
+iter_lognormal_group21 = lognormal_NG(theta,f21)
+iter_lognormal_group22 = lognormal_NG(theta,f22)
+iter_lognormal_group23 = lognormal_NG(theta,f23)
+iter_lognormal_group24 = lognormal_NG(theta,f24)
+iter_lognormal_group25 = lognormal_NG(theta,f25)
+test = seq(1,100,0.1)
+plot(f1$time,f1$pdf,type = "l",xlim = c(1,20))
+points(test,fn(iter_lognormal_group1,test,sum(f1$pdf)))
+plot(f10$time,f10$pdf,type = "l",xlim = c(1,20))
+points(test,fn(iter_lognormal_group10,test,sum(f10$pdf)))
+plot(f7$time,f7$pdf,type = "l",xlim = c(1,20))
+points(test,fn(iter_lognormal_group7,test,sum(f7$pdf)))
+plot(f7$time,f7$pdf,type = "l",xlim = c(1,20))
+points(test,fn(iter_lognormal_group7,test,sum(f7$pdf)))
+plot(f7$time,f7$pdf,type = "l",xlim = c(1,20))
+points(test,fn(iter_lognormal_group7,test,sum(f7$pdf)))
+plot(f7$time,f7$pdf,type = "l",xlim = c(1,20))
+points(test,fn(iter_lognormal_group7,test,sum(f7$pdf)))
+```
+
+
+```{r}
+data = read.csv("refined_data_220118.csv")
+date1 = as.Date(data$entry_date)
+date2 = as.Date(data$date_symptoms)
+date3 = rep("2050-01-01",13244807)
+for (i in 1:13244807){
+  if (data$date_died[i]!="9999-99-99"){
+    date3[i] = data$date_died[i]
+  }
+}
+date3 = as.Date(date3)
+#time of patient survival after symptom, 10000 if not died
+survival_time = as.numeric(date3-date2)
+for (i in 1:13244807){
+  if (data$date_died[i]=="9999-99-99"){
+    survival_time[i] = 10000
+  }
+}
+data$survival_time = survival_time
+```
+
+
+```{r}
+#coxph data cleaning
+death_data = data[data$survival_time!=10000&data$survival_time>0,]
+death_data$death = rep(1,383896)
+count(death_data$survival_time)
+death_data$Age_group = rep(1,383896)
+death_data$Age_group[death_data$AGE>=18&death_data$AGE<30] = 2
+death_data$Age_group[death_data$AGE>=30&death_data$AGE<45] = 3
+death_data$Age_group[death_data$AGE>=45&death_data$AGE<60] = 4
+death_data$Age_group[death_data$AGE>=60] = 5
+death_data$INTUBATED[death_data$INTUBATED!=1&death_data$INTUBATED!=2]=NA
+death_data$PNEUMONIA[death_data$PNEUMONIA!=1&death_data$PNEUMONIA!=2]=NA
+death_data$PREGNANCY[death_data$PREGNANCY!=1&death_data$PREGNANCY!=2]=NA
+death_data$home_language[death_data$home_language==99]=NA
+death_data$INDIGENOUS[death_data$INDIGENOUS!=1&death_data$INDIGENOUS!=2]=NA
+death_data$DIABETES[death_data$DIABETES==98]=NA
+death_data$COPD[death_data$COPD==98]=NA
+death_data$ASTHMA[death_data$ASTHMA!=1&death_data$ASTHMA!=2]=NA
+death_data$INMUSUPR[death_data$INMUSUPR!=1&death_data$INMUSUPR!=2]=NA
+death_data$HYPERTENSION[death_data$HYPERTENSION!=1&death_data$HYPERTENSION!=2]=NA
+death_data$OTHER_COM[death_data$OTHER_COM!=1&death_data$OTHER_COM!=2]=NA
+death_data$CARDIOVASCULAR[death_data$CARDIOVASCULAR!=1&death_data$CARDIOVASCULAR!=2]=NA
+death_data$OBESITY[death_data$OBESITY!=1&death_data$OBESITY!=2]=NA
+death_data$RENAL_CHRONIC[death_data$RENAL_CHRONIC!=1&death_data$RENAL_CHRONIC!=2]=NA
+death_data$SMOKING[death_data$SMOKING!=1&death_data$SMOKING!=2]=NA
+death_data = death_data[-c(1,2,3,5,6,7,8,9,11,12,25,26)]
+death_data = death_data[-c(16,15)]
+death_data = na.omit(death_data)
+```
+
+```{r}
+coxph_wholemodel = coxph(Surv(survival_time,death)~SEX+Age_group+PNEUMONIA+home_language+INDIGENOUS+DIABETES+COPD+ASTHMA+INMUSUPR+HYPERTENSION+OTHER_COM+CARDIOVASCULAR+OBESITY+RENAL_CHRONIC+SMOKING,data = death_data)
+summary(coxph_wholemodel)
+ggsurvplot(survfit(coxph_wholemodel,data = death_data),xlim = c(0,50),break.x.by = 10,conf.int = T)
+#sex
+sex_df = data.frame(SEX = c(1,2),Age_group = c(2,2),PNEUMONIA = c(1,1),home_language=c(1,1),INDIGENOUS=c(1,1),DIABETES=c(1,1),COPD=c(1,1),ASTHMA=c(1,1),INMUSUPR=c(1,1),HYPERTENSION=c(1,1),OTHER_COM=c(1,1),CARDIOVASCULAR=c(1,1),OBESITY=c(1,1),RENAL_CHRONIC=c(1,1),SMOKING=c(1,1))
+ggsurvplot(fit,xlim = c(0,50),break.x.by = 10,conf.int = T)
+fit = survfit(coxph_wholemodel,newdata = sex_df,data = death_data)
+#Age 
+age_df = data.frame(SEX = c(1,1,1,1,1),Age_group = c(1,2,3,4,5),PNEUMONIA = c(1,1,1,1,1),home_language=c(1,1,1,1,1),INDIGENOUS=c(1,1,1,1,1),DIABETES=c(1,1,1,1,1),COPD=c(1,1,1,1,1),ASTHMA=c(1,1,1,1,1),INMUSUPR=c(1,1,1,1,1),HYPERTENSION=c(1,1,1,1,1),OTHER_COM=c(1,1,1,1,1),CARDIOVASCULAR=c(1,1,1,1,1),OBESITY=c(1,1,1,1,1),RENAL_CHRONIC=c(1,1,1,1,1),SMOKING=c(1,1,1,1,1))
+fit = survfit(coxph_wholemodel,newdata = age_df)
+ggsurvplot(fit,data = death_data,xlim = c(0,50),break.x.by = 10,conf.int = T)
+#model selection
+step(coxph(Surv(survival_time,death)~1,data=death_data),direction = "forward")
+stepAIC(coxph(Surv(survival_time,death)~1,data=death_data),scope = formula(coxph_wholemodel),direction = "forward",k=2)
+#the result is without variable hypertension, so we will use this model
+selected_model = coxph(Surv(survival_time,death)~SEX+Age_group+PNEUMONIA+home_language+INDIGENOUS+DIABETES+COPD+ASTHMA+INMUSUPR+OTHER_COM+CARDIOVASCULAR+OBESITY+RENAL_CHRONIC+SMOKING,data = death_data)
+fit = survfit(coxph_wholemodel,newdata = age_df)
+ggsurvplot(fit,data = death_data,ylim = c(0.1,0.5),xlim = c(10,15),break.x.by = 5,conf.int = F)
+```
+
+
+
+```{r}
+cbind(iter_lognormal_group1,iter_lognormal_group2,iter_lognormal_group3,
+      iter_lognormal_group4,iter_lognormal_group5,iter_lognormal_group6,
+      iter_lognormal_group7,iter_lognormal_group8,iter_lognormal_group9,
+      iter_lognormal_group10,iter_lognormal_group11,iter_lognormal_group12,
+      iter_lognormal_group13,iter_lognormal_group14,iter_lognormal_group15,
+      iter_lognormal_group16,iter_lognormal_group17,iter_lognormal_group18,
+      iter_lognormal_group19,iter_lognormal_group20,iter_lognormal_group21,
+      iter_lognormal_group22,iter_lognormal_group23,iter_lognormal_group24,
+      iter_lognormal_group25)
+test = seq(0,20,0.01)
+plot(fn(c(2.5,0.2),test))
+points(fn(c(2.5,0.3),test),col = "blue")
+points(fn(c(2.2,0.2),test), col = "red")
+# mle method, not good
+plot(f7$time,f7$pdf,type = "l",xlim = c(1,20))
+points(test,fn(c(2.0192427,0.3630219),test,sum(f7$pdf)))
+plot(f15$time,f15$pdf,type = "l",xlim = c(1,20))
+points(test,fn(c(2.0767614,0.3438278),test,sum(f15$pdf)))
+########
+#test area, not main code
+x = f15$time[f15$time<20]
+y = f15$pdf[f15$time<20]
+t3 = sum(f15$pdf)
+nll = function(theta1,theta2){
+    fx = log(fn(c(theta1,theta2),x,t3))
+    s = 0
+    for (i in 1:length(fx)){
+      s = s-y[i]*fx[i]
+    }
+    return (s)
+}
+mle(minuslog=nll, start=list(theta1=2.5,theta2=0.3))
+x = f7$time[f7$time<20]
+y = f7$pdf[f7$time<20]
+t3 = sum(f7$pdf)
+iterhist = theta
+f = fn(theta,x,t3)
+g = dfn(theta,x,t3)
+solve(t(g)%*%g,t(g)%*%(y-f))
+theta = theta+solve(t(g)%*%g,t(g)%*%(y-f))
+ iterhist = theta
+ rbind(iterhist,theta)
+theta
+dfn(c(5.77,-0.83,9.1),x)
+dfn(theta,test)[50,]
+#0.003824533 0.001876351 0.029997458
+fn(c(0.5,1.001,0.101),test)[50]
+(0.003031633-0.002999746)*1000
+(0.002999746-0.002971601)*1000
+log(0.7)
+test = seq(0,20,0.01)
+plot(f7$time,f7$pdf,type = "l",xlim = c(1,20))
+points(test,fn(c(2.5,0.3,3),test))
+exp(-sigma)
+```
+
+```{r}
+#Parametric Model
+```
+
+
